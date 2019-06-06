@@ -27,25 +27,42 @@ class TimeSheet(cmd.Cmd):
             print("No timer running")
             
     def do_start_timer(self, inp):
-        args = tuple(inp.split())
-        #[-t, title, -p, project, -tt, tag, tag2]
-        parsed = dict({"Title": "", "Project": "", "Tags": ""})
-        indices = dict() 
-        for i in range(len(args)):
-            if(args[i] == "-t"):
-                indices["Title"] = i
-            if(args[i] == "-p"):
-                indices["Project"] = i
-            if(args[i] == "-tt"):
-                indices["Tags"] = i
-        print(args)
-        print(indices)
-        #for k, v in parsed:
-           # if v != -1:
-                #if dict.
-                #for j in range(parsed)
+        ''' start_timer -t title -p project -tt tag1 
+        or you could include spaces in title and project
+        ex: start_timer -t the title -p project 2 -t tag1 tag2 tag3
         
-        #self.timesheet.start_timer(parsed["Title"], parsed["Project"], "tag")
+        This should be revisited becuase it is cumbersome and probably susceptible to user input tom-foolery
+        '''
+        args = tuple(inp.split())
+        parsed = {"title": "", "project": "", "tags": ""}
+        indices = []
+        for idx, arg in enumerate(args):
+            if arg == "-t":
+                indices.append(["t", idx])
+            if arg == "-p":
+                indices.append(["p", idx])
+            if arg == "-tt":
+                indices.append(["tt", idx])
+        for idx, elem in enumerate(indices):
+            if idx < (len(indices) - 1):
+                elem.append(indices[idx + 1][1])
+            else:
+                elem.append(len(args))
+        for elem in indices:
+            if elem[0] == "t":
+                for i in range(elem[1]+1, elem[2]):
+                    parsed["title"] += args[i] + " "
+                parsed["title"] = parsed["title"].strip()
+            if elem[0] == "p":
+                for i in range(elem[1]+1, elem[2]):
+                    parsed["project"] += args[i] + " "
+                parsed["project"] = parsed["project"].strip()
+            if elem[0] == "tt":
+                for i in range(elem[1]+1, elem[2]):
+                    parsed["tags"] += args[i] + " "
+                parsed["tags"] = parsed["tags"].strip()
+        self.timesheet.start_timer(parsed["title"], parsed["project"], parsed["tags"])
+    
 
     def do_stop_timer(self, inp):
         self.timesheet.stop_timer()
@@ -94,19 +111,8 @@ class TimeSheet(cmd.Cmd):
         d = str(datetime.timedelta(seconds=(current_time - int(current_timer[0]))))
         print("Time: ", d)
 
-        
-    #recives a dict with {"Start": int, "End": int, "Title": string, "Project": string, "Tags": list(strings)}
-    #but might not have all of those keys so need to make a remake dict with blank key entries
-    def addEntry(self, entry):
-        return
-
-    def do_printAll(self, inp):
+    def do_print_local_sheet(self, inp):
         print(self.timesheet.local_sheet)
-
-    def do_test(self, inp):
-        values = self.sheet.get_all_values()
-        print(values)
-        print(gspread.utils.rowcol_to_a1(len(values), len(values[0])))
         
     #quit
     def do_q(self, inp):
@@ -118,5 +124,3 @@ def main():
    
 if __name__ == "__main__":
     main()
-
-# s

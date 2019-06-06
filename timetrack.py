@@ -33,8 +33,6 @@ class TimeTrack():
                     local_sheet[i][j] = int(local_sheet[i][j])
         return local_sheet
 
-
-
     def start_timer(self, title, project, tags):
         if(self.is_timer_on):
             print("Timer already on")
