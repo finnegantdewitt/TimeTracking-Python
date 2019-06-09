@@ -1,13 +1,9 @@
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import datetime
-import argparse
 import cmd
-import shlex
 import json
-import threading
 import timetrack
 from prettytable import PrettyTable
+import threading
 
 class TimeSheet(cmd.Cmd):
     prompt = "(TimeTrack) "
@@ -77,7 +73,6 @@ class TimeSheet(cmd.Cmd):
         todays_timers = self.timesheet.get_today()
         table = PrettyTable(["Title", "Duration", "Start Time", "End Time", "Project"])
         for timer in todays_timers:
-            d = ""
             if(timer[1] == 0):
                 timestamp = int(datetime.datetime.now().timestamp())
                 d = str(datetime.timedelta(seconds=(timestamp - timer[0])))
@@ -92,7 +87,6 @@ class TimeSheet(cmd.Cmd):
         next(itertimer)
         table = PrettyTable(["Title", "Duration", "Start Time", "End Time", "Project"])
         for timer in itertimer:
-            d = ""
             if(timer[1] == 0):
                 timestamp = int(datetime.datetime.now().timestamp())
                 d = str(datetime.timedelta(seconds=(timestamp - timer[0])))
@@ -102,6 +96,79 @@ class TimeSheet(cmd.Cmd):
                 table.add_row([timer[2], d, datetime.datetime.fromtimestamp(timer[0]), datetime.datetime.fromtimestamp(timer[1]), timer[3]])
         print(table)
 
+    def do_modify_entry(self, inp):
+        datetime_parsed = None
+        try:
+            datetime_parsed = datetime.datetime.strptime(inp, '%m/%d/%Y')
+        except:
+            while True:
+                date_entry = input("Please enter a date in mm/dd/yyyy format: ")            
+                if(date_entry == "quit"):
+                    return
+                try:
+                    datetime_parsed = datetime.datetime.strptime(date_entry, '%m/%d/%Y')
+                    break
+                except:
+                    print("unreadable")
+                    continue
+        timers = self.timesheet.get_timers_date(datetime_parsed)
+        selection_table = PrettyTable(["Entry", "Title", "Duration", "Start Time", "End Time", "Project"])
+        for idx, timer in enumerate(timers):
+            if(timer[1] == 0):
+                timestamp = int(datetime.datetime.now().timestamp())
+                d = str(datetime.timedelta(seconds=(timestamp - timer[0])))
+                selection_table.add_row([idx, timer[2], d, datetime.datetime.fromtimestamp(timer[0]), datetime.datetime.fromtimestamp(timestamp), timer[3]])
+            else:
+                d = str(datetime.timedelta(seconds=(timer[1] - timer[0])))
+                selection_table.add_row([idx, timer[2], d, datetime.datetime.fromtimestamp(timer[0]), datetime.datetime.fromtimestamp(timer[1]), timer[3]])
+        print(selection_table)
+        selected_timer = None
+        while True:
+            selection = input("Select an entry: ")
+            if(selection == "quit"):
+                return
+            try:
+                selected_timer = timers[int(selection)]
+                break
+            except:
+                print("unreadable, please select a entry using a number from the selection table above or enter quit to stop")
+                continue
+        selected_timer_table = PrettyTable(["Title", "Duration", "Start Time", "End Time", "Project"])
+        if(selected_timer[1] == 0):
+            timestamp = int(datetime.datetime.now().timestamp())
+            d = str(datetime.timedelta(seconds=(timestamp - selected_timer[0])))
+            selected_timer_table.add_row([selected_timer[2], d, datetime.datetime.fromtimestamp(selected_timer[0]), datetime.datetime.fromtimestamp(timestamp), selected_timer[3]])
+        else:
+            d = str(datetime.timedelta(seconds=(selected_timer[1] - selected_timer[0])))
+            selected_timer_table.add_row([selected_timer[2], d, datetime.datetime.fromtimestamp(selected_timer[0]), datetime.datetime.fromtimestamp(selected_timer[1]), selected_timer[3]])
+        print(selected_timer_table)
+        while True:
+            modify = input("What would you like to modify [title][project][tags]: ")
+            if modify == "quit":
+                return
+            elif modify == "title":
+                selected_timer[2] = input("Enter new title: ")
+                break
+            elif modify == "project":
+                selected_timer[3] = input("Enter new project: ")
+                break
+            elif modify == "tags":
+                selected_timer[4] = input("Enter new tags: ")
+                break
+            else:
+                print("unable to determine what to modify based off input, try again, or enter quit")
+                continue
+        selected_timer_table = PrettyTable(["Title", "Duration", "Start Time", "End Time", "Project"])
+        if(selected_timer[1] == 0):
+            timestamp = int(datetime.datetime.now().timestamp())
+            d = str(datetime.timedelta(seconds=(timestamp - selected_timer[0])))
+            selected_timer_table.add_row([selected_timer[2], d, datetime.datetime.fromtimestamp(selected_timer[0]), datetime.datetime.fromtimestamp(timestamp), selected_timer[3]])
+        else:
+            d = str(datetime.timedelta(seconds=(selected_timer[1] - selected_timer[0])))
+            selected_timer_table.add_row([selected_timer[2], d, datetime.datetime.fromtimestamp(selected_timer[0]), datetime.datetime.fromtimestamp(selected_timer[1]), selected_timer[3]])
+        print(selected_timer_table)
+        threading.Thread(target=self.timesheet.update_sheet()).start()
+        
     def do_current_timer(self, inp):
         if(self.timesheet.is_timer_on == False):
             print("Timer isn't running")
