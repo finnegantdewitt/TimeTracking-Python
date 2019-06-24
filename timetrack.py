@@ -41,7 +41,7 @@ class TimeTrack():
         entry = [current_time, 0, title, project, tags]
         self.local_sheet.append(entry)
         self.is_timer_on = True
-        threading.Thread(target=self.update_sheet).start() #add exception handler
+        threading.Thread(target=self.update_sheet()).start() #add exception handler
 
     def stop_timer(self):
         if(self.is_timer_on == False):
@@ -89,3 +89,13 @@ class TimeTrack():
             if(datetime.date.fromtimestamp(timer[0]) == date.date()):
                 timers.append(timer)
         return timers
+
+    def save_to_json(self):
+        #make into an array of dicts
+        with open("timers.json", 'w') as file:
+            json.dump(self.online_sheet.get_all_records(), file)
+
+    def read_json(self):
+        with open("timers.json", 'r') as file:
+            return 
+            

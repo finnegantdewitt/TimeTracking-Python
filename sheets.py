@@ -60,13 +60,13 @@ class TimeSheet(cmd.Cmd):
         self.timesheet.start_timer(parsed["title"], parsed["project"], parsed["tags"])
     
 
-    def do_stop_timer(self, inp):
+    def do_stop_timer(self, inp=""):
         self.timesheet.stop_timer()
 
-    def do_update_sheet(self, inp):
+    def do_update_sheet(self, inp=""):
         self.timesheet.update_sheet()
 
-    def do_refresh_sheet(self, inp):
+    def do_refresh_sheet(self, inp=""):
         self.timesheet.refresh_sheet()
 
     def do_today(self, inp):
@@ -96,7 +96,7 @@ class TimeSheet(cmd.Cmd):
                 table.add_row([timer[2], d, datetime.datetime.fromtimestamp(timer[0]), datetime.datetime.fromtimestamp(timer[1]), timer[3]])
         print(table)
 
-    def do_modify_entry(self, inp):
+    def select_timer(self, date_arg):
         datetime_parsed = None
         try:
             datetime_parsed = datetime.datetime.strptime(inp, '%m/%d/%Y')
@@ -142,6 +142,10 @@ class TimeSheet(cmd.Cmd):
             d = str(datetime.timedelta(seconds=(selected_timer[1] - selected_timer[0])))
             selected_timer_table.add_row([selected_timer[2], d, datetime.datetime.fromtimestamp(selected_timer[0]), datetime.datetime.fromtimestamp(selected_timer[1]), selected_timer[3]])
         print(selected_timer_table)
+        return selected_timer
+
+    def do_modify_entry(self, inp):
+        selected_timer = self.select_timer(inp)
         while True:
             modify = input("What would you like to modify [title][project][tags]: ")
             if modify == "quit":
@@ -169,7 +173,7 @@ class TimeSheet(cmd.Cmd):
         print(selected_timer_table)
         threading.Thread(target=self.timesheet.update_sheet()).start()
         
-    def do_current_timer(self, inp):
+    def do_current_timer(self, inp=""):
         if(self.timesheet.is_timer_on == False):
             print("Timer isn't running")
             return
@@ -178,7 +182,7 @@ class TimeSheet(cmd.Cmd):
         d = str(datetime.timedelta(seconds=(current_time - int(current_timer[0]))))
         print("Time: ", d)
 
-    def do_print_local_sheet(self, inp):
+    def do_print_local_sheet(self, inp=""):
         print(self.timesheet.local_sheet)
         
     #quit
